@@ -1,0 +1,202 @@
+# Define helper OUTSIDE the main function to avoid closure capture
+.solve_w_row_qp <- function(i, G_W, g_W, A_W, b_W) {
+  sol <- quadprog::solve.QP(Dmat = G_W, dvec = g_W[, i], Amat = A_W, bvec = b_W, meq = 1)
+  abs(sol$solution)
+}
+
+snmf.qp <- function(x, k, W = NULL, H = NULL, k_means = TRUE, veo = FALSE, lr_h = 0.1,
+                     maxiter = 1000, tol = 1e-6, ridge = 1e-8, history = FALSE, ncores = 1) {
+
+  runtime <- proc.time()
+  n <- dim(x)[1]
+  D <- dim(x)[2]
+
+  # Initialize W, H on simplex
+  if ( k_means ) {
+    a <- kmeans( t(x), k)
+    W <- matrix(nrow = n, ncol = k)
+    for ( i in 1:k )  W[, i] <- Rfast::rowsums(x[, a$cl == i, drop = FALSE])
+    H <- kmeans(x, k)$centers
+    if ( veo ) {
+      H <- matrix(nrow = k, ncol = D)
+      cs <- as.numeric( sparcl::KMeansSparseCluster(x, k, wbounds = 2)[[1]]$Cs )
+      for ( i in 1:k ) H[i, ] <- Rfast::colmeans(x[cs == i, , drop = FALSE])
+    }
+  } else {
+    if ( is.null(W) ) {
+      W <- matrix(Rfast2::Runif(n * k), nrow = n, ncol = k)
+      W <- W / Rfast::rowsums(W)
+    }
+    if ( is.null(H) ) {
+      H <- matrix(Rfast2::Runif(k * D), nrow = k, ncol = D)
+      H <- H / Rfast::rowsums(H)  ## FIX: rows sum to 1, not columns
+    }
+  }
+
+  error <- numeric(maxiter)
+  A_W <- t( rbind(rep(1, k), diag(k)) )
+  b_W <- c(1, rep(0, k))
+  ridgek <- diag(ridge, k)
+
+  suppressWarnings({
+
+  # CREATE CLUSTER ONCE BEFORE LOOP (like snmf.sqp)
+  if (ncores > 1) {
+    cl <- parallel::makeCluster(ncores)
+    on.exit(parallel::stopCluster(cl), add = TRUE)
+    parallel::clusterEvalQ(cl, library(quadprog))
+    parallel::clusterExport( cl, varlist = c(".solve_w_row_qp", "A_W", "b_W"), envir = environment() )
+  }
+
+  if ( !veo ) {  ## veo is FALSE, n > p
+
+    sx2 <- sum(x^2)
+    kD <- k * D
+    XX <- matrix(0, kD, kD)
+    ind <- matrix(1:kD, ncol = k, byrow = TRUE)
+    A <- XX
+    for (i in 1:k)  A[i, ind[, i]] <- 1
+    A <- t( rbind(A, diag(kD)) )
+    A <- A[, -c((k + 1):kD)]
+    bvec <- c( rep(1, k), rep(0, kD) )
+
+    for ( it in 1:maxiter ) {
+      # ----------------- W update -----------------
+      G_W <- 2 * tcrossprod(H) + ridgek
+      g_W <- 2 * tcrossprod(H, x)
+
+      if ( ncores > 1 ) {
+        # Export iteration-specific variables
+        parallel::clusterExport(cl, varlist = c("G_W", "g_W"), envir = environment())
+        W <- t( parallel::parSapply(cl, 1:n, .solve_w_row_qp, G_W = G_W, g_W = g_W, A_W = A_W, b_W = b_W) )
+      } else {
+        for ( i in 1:n ) {
+          sol <- quadprog::solve.QP(Dmat = G_W, dvec = g_W[, i], Amat = A_W, bvec = b_W, meq = 1)
+          W[i, ] <- abs(sol$solution)
+        }
+      }
+
+      # ----------------- H update -----------------
+      dvec <- as.vector( crossprod(W, x) )
+      xx <- crossprod(W)
+      for ( i in 1:D )  XX[ind[i, ], ind[i, ]] <- xx
+      f <- try( quadprog::solve.QP(Dmat = XX, dvec = dvec, Amat = A, bvec = bvec, meq = k), silent = TRUE )
+      if ( identical(class(f), "try-error") ) {
+        f <- quadprog::solve.QP(Dmat = Matrix::nearPD(XX)$mat, dvec = dvec, Amat = A, bvec = bvec, meq = k)
+      }
+      H <- matrix(abs(f$solution), ncol = D)
+      err <- sx2 + 2 * f$value
+      error[it] <- err
+
+      if ( it > 1 && abs(error[it - 1] - err) < tol ) {
+        break
+      }
+    }
+	Z <- W %*% H
+
+  } else {  ## veo is TRUE, n < p
+
+    sx2 <- sum(x^2)
+    kD <- k * D
+    XX <- matrix(0, kD, kD)
+    ind <- matrix(1:kD, ncol = k, byrow = TRUE)
+    A <- XX
+    for (i in 1:k)  A[i, ind[, i]] <- 1
+    A <- t( rbind(A, diag(kD)) )
+    A <- A[, -c((k + 1):kD)]
+    bvec <- c( rep(1, k), rep(0, kD) )
+
+    for ( it in 1:maxiter ) {
+      # ----------------- W update -----------------
+      G_W <- 2 * tcrossprod(H) + ridgek
+      g_W <- 2 * tcrossprod(H, x)
+
+      if ( ncores > 1 ) {
+        # Export iteration-specific variables
+        parallel::clusterExport(cl, varlist = c("G_W", "g_W"), envir = environment())
+        W <- t( parallel::parSapply(cl, 1:n, .solve_w_row_qp, G_W = G_W, g_W = g_W, A_W = A_W, b_W = b_W) )
+      } else {
+        for ( i in 1:n ) {
+          sol <- quadprog::solve.QP(Dmat = G_W, dvec = g_W[, i], Amat = A_W, bvec = b_W, meq = 1)
+          W[i, ] <- abs(sol$solution)
+        }
+      }
+
+      # ----------------- H update -----------------
+      E <- W %*% H - x
+      grad_h <- crossprod(W, E)
+      H <- H * exp(-lr_h * grad_h)
+      H <- H / Rfast::rowsums(H)  ## FIX: rows sum to 1, not columns
+      Z <- W %*% H
+      err <- sum( (x - Z)^2 )
+      error[it] <- err
+
+      if ( it > 1 && abs(error[it - 1] - err) < tol ) {
+        break
+      }
+    }
+
+  }  ##  end if (!veo)
+
+  })  # end suppressWarnings
+
+  runtime <- proc.time() - runtime
+  error <- error[1:it]
+  obj <- error[it]
+  if ( !history )  error <- NULL
+
+  list(W = W, H = H, Z = Z, obj = obj, error = error, iters = it, runtime = runtime)
+}
+
+
+
+
+
+# snmf.qp_old <- function(x, k, maxiter = 10000, tol = 1e-6, ridge = 1e-6) {
+  # n <- dim(x)[1]  ;  D <- dim(x)[2]
+  # # Initialize W, H on simplex
+  # W <- matrix( Rfast2::Runif(n * k), nrow = n, ncol = k)
+  # W <- W / Rfast::rowsums(W)
+  # H <- matrix( Rfast2::Runif(k * D), nrow = k, ncol = D)
+  # H <- H / Rfast::rowsums(H)  ## FIX: rows sum to 1, not columns
+  # error <- numeric(maxiter)
+  # A_W <- rbind( rep(1, k), diag(k) )
+  # b_W <- c( 1, rep(0, k) )
+  # ridgek <- diag(ridge, k)
+
+  # for ( it in 1:maxiter ) {
+    # # ----------------- W update -----------------
+    # G_W <- 2 * tcrossprod(H) + ridgek
+    # for (i in 1:n) {
+      # g_W <- 2 * (H %*% x[i, ])
+      # sol <- quadprog::solve.QP(Dmat = G_W, dvec = g_W, Amat = t(A_W), bvec = b_W, meq = 1)
+      # W[i, ] <- sol$solution
+    # }
+    # # ----------------- H update -----------------
+    # WH <- W %*% H
+    # A_H <- rbind(rep(1, D), diag(D))
+    # b_H <- c(1, rep(0, D))
+
+    # for ( j in 1:k ) {
+      # # Residual without row j's contribution
+      # WH_minus_j <- WH - W[, j] %*% H[j, , drop = FALSE]
+      # Rj <- x - WH_minus_j
+      # # Weighted least squares with weights W[,j]^2
+      # w3 <- W[, j]^3    ;  w4 <- W[, j]^4
+      # # Linear term: 2 * sum_i W[i,j]^3 * Rj[i,d] for each d
+      # g_H <- 2 * Rfast::colsums(w3 * Rj)
+      # # Quadratic term: 2 * (sum_i W[i,j]^4) * I_D
+      # G_H <- 2 * sum(w4) * diag(D) + diag(ridge, D)
+      # sol <- quadprog::solve.QP(Dmat = G_H, dvec = g_H, Amat = t(A_H), bvec = b_H, meq = 1)
+      # H[j, ] <- sol$solution
+    # }
+    # # ----------------- Error -----------------
+    # err <- sum( (x - W %*% H)^2 )
+    # error[it] <- err
+    # if ( it > 1 && abs(error[it - 1] - err) < tol ) {
+      # break
+    # }
+  # }
+
+  # list(W = W, H = H, Z = W %*% H, obj = error[it], iters = it)
+# }

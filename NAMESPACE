@@ -1,0 +1,14 @@
+#useDynLib(Compositional, .registration = TRUE)
+
+importFrom("Rfast", rowsums, rowMaxs, Log, Median)
+importFrom("Rfast2", Runif)
+importFrom("stats", median, sd, kmeans)
+importFrom("Matrix", nearPD, colSums, sparseMatrix, Diagonal, bdiag)
+importFrom("sparcl", KMeansSparseCluster)
+importFrom("Rglpk", Rglpk_solve_LP)
+importFrom("ClusterR", MiniBatchKmeans)
+import("parallel")
+
+exportPattern("^[[:alpha:]]+")
+exportPattern("^[^\\.]")
+

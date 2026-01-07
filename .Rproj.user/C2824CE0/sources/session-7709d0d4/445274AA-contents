@@ -1,0 +1,12 @@
+#useDynLib(Compositional, .registration = TRUE)
+
+importFrom("Compositional", ternary, pyramid)
+importFrom("Rfast", rowsums, rowMaxs, Log)
+importFrom("Rfast2", Runif)
+importFrom("stats", median, sd, kmeans)
+importFrom("quadprog", solve.QP)
+importFrom("Matrix", nearPD)
+
+exportPattern("^[[:alpha:]]+")
+exportPattern("^[^\\.]")
+

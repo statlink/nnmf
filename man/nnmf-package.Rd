@@ -1,0 +1,37 @@
+\name{nnmf-package}
+\alias{nnmf-package}
+\docType{package}
+\title{
+Nonnegative Matrix Factorization
+}
+
+\description{
+Nonnegative matrix factorization (NMF) is implemented.
+}
+
+\details{
+\tabular{ll}{
+Package: \tab nnmf\cr
+Type: \tab Package\cr
+Version: \tab 1.0 \cr
+Date: \tab 2026-01-05\cr
+License: \tab GPL-2\cr
+}
+}
+
+\author{
+Michail Tsagris \email{mtsagris@uoc.gr}.
+}
+
+\section{Maintainers}{
+Michail Tsagris <mtsagris@uoc.gr>
+}
+
+\references{
+Cutler A. and Breiman L. (1994). Archetypal analysis. Technometrics, 36(4): 338--347.
+}
+
+%\note{
+%}
+
+

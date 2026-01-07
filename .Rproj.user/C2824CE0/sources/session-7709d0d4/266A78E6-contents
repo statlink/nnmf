@@ -1,0 +1,51 @@
+snmf.md <- function(x, k, W = NULL, H = NULL, maxiter = 1000, tol = 1e-6, alpha_factor = 1.0) {
+
+  runtime <- proc.time()
+  n <- dim(x)[1]  ;  D <- dim(x)[2]
+  # initialize W and H randomly and normalize
+  if ( is.null(W) ) {
+    W <- matrix( Rfast2::Runif(n * k), nrow = n, ncol = k)
+    W <- W / Rfast::rowsums(W)
+  }
+  if ( is.null(H) ) {
+    H <- matrix( Rfast2::Runif(k * D), nrow = k, ncol = D)
+    H <- H / Rfast::rowsums(H)  ## FIX: rows sum to 1, not columns
+  }
+  prev_obj <- Inf
+
+  for ( it in 1:maxiter ) {
+    # Precompute
+    WtW <- crossprod(W)
+    Wtx <- crossprod(W, x)
+    HHt <- tcrossprod(H)
+    xHt <- tcrossprod(x, H)
+    # Choose step sizes: scale by spectral norms (empirical)
+    sW <- svd(W, nu = 0, nv = 0)$d[1]
+    sH <- svd(H, nu = 0, nv = 0)$d[1]
+    # conservative choices for mirror descent
+    alpha_h <- alpha_factor / (2 * (sW^2) + 1e-12)
+    alpha_w <- alpha_factor / (2 * (sH^2) + 1e-12)
+    # ---- H multiplicative update (rows)  ## FIX: comment changed
+    G_H <- 2 * (WtW %*% H - Wtx)   # k x D
+    # stable exponentiation per row  ## FIX: comment changed
+    E <-  -alpha_h * G_H
+    E <- E - Rfast::rowMaxs(E, TRUE)
+    H <- H * exp(E)
+    H <- H / Rfast::rowsums(H)
+    # ---- W multiplicative update (rows)
+    G_W <- 2 * (W %*% HHt - xHt)   # n x k
+    E <-  -alpha_w * G_W
+    E <- E - Rfast::rowMaxs(E, TRUE)
+    W <- W * exp(E)
+    W <- W / Rfast::rowsums(W)
+    # ---- objective & stopping
+    obj <- sum( (x - W %*% H)^2 )
+    if ( it == 1 ) relchg <- Inf  else  relchg <- abs(prev_obj - obj)
+    if ( relchg < tol ) break
+    prev_obj <- obj
+  }
+
+  runtime <- proc.time() - runtime
+
+  list(W = W, H = H, obj = obj, iters = it, runtime = runtime)
+}

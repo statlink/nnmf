@@ -1,0 +1,72 @@
+snmf.pgd <- function(x, k, W = NULL, H = NULL, maxiter = 1000, tol = 1e-6, ridge = 1e-12) {
+
+  runtime <- proc.time()
+  n <- dim(x)[1]  ;  D <- dim(x)[2]
+  # initialize W and H randomly and normalize
+  if ( is.null(W) ) {
+    W <- matrix( Rfast2::Runif(n * k), nrow = n, ncol = k)
+    W <- W / Rfast::rowsums(W)
+  }
+  if ( is.null(H) ) {
+    H <- matrix( Rfast2::Runif(k * D), nrow = k, ncol = D)
+    H <- H / Rfast::rowsums(H)  ## FIX: rows sum to 1, not columns
+  }
+  prev_obj <- Inf
+
+  for ( it in 1:maxiter ) {
+    # ---- H update (PGD on H, project rows)  ## FIX: comment changed
+    # gradient: G_H = 2 * (W^T W H - W^T x)
+    WtW <- crossprod(W)                    # k x k
+    Wtx <- crossprod(W, x)                 # k x n
+    G_H <- 2 * (WtW %*% H - Wtx)
+    # step size: 1 / L where L = 2 * (sigma_max(W))^2
+    s <- svd(W, nu = 0, nv = 0)$d[1]       # sigma_max(W)
+    Lh <- 2 * (s^2)
+    alpha_h <- 1 / (Lh + ridge)
+    H <- H - alpha_h * G_H
+    H <- t( .proj_simplex_columns( t(H) ) )  ## FIX: project rows instead of columns
+    # ---- W update (PGD on W, project rows)
+    # gradient wrt W: G_W = 2 * (W H H^T - x H^T)
+    HHt <- tcrossprod(H)                   # r x r
+    xHt <- tcrossprod(x, H)                # m x k
+    G_W <- 2 * (W %*% HHt - xHt)
+    # Lipschitz for W-step: 2 * sigma_max(H)^2
+    sH <- svd(H, nu = 0, nv = 0)$d[1]
+    Lw <- 2 * (sH^2)
+    alpha_w <- 1 / (Lw + ridge)
+    W <- W - alpha_w * G_W
+    # project rows: transpose, project columns, transpose back
+    W <- t( .proj_simplex_columns( t(W) ) )
+    # ---- objective & stopping
+    obj <- sum( (x - W %*% H)^2 )
+    if ( it == 1 ) relchg <- Inf  else  relchg <- abs(prev_obj - obj)
+    if ( relchg < tol ) break
+    prev_obj <- obj
+  }
+
+  runtime <- proc.time() - runtime
+
+  list(W = W, H = H, obj = obj, iters = it, runtime = runtime)
+}
+
+
+
+.proj_simplex_columns <- function(X, eps = 1e-12) {
+  k <- dim(X)[1]  ;  D <- dim(X)[2]
+  Y <- matrix(0, k, D)
+  # vectorized-ish: sort each column
+  # We'll use apply over columns (fast enough in R for moderate sizes).
+  Y <- apply(X, 2, function(v) {
+    u <- sort(v, decreasing = TRUE)
+    cssv <- cumsum(u)
+    rho_candidates <- u + (1 - cssv) / seq_along(u)
+    rho <- max(which(rho_candidates > 0))
+    theta <- (cssv[rho] - 1) / rho
+    p <- pmax(v - theta, 0)
+    # guard numerics
+    p <- p / max(sum(p), eps)
+    p
+  })
+  if ( is.null(dim(Y)) )  Y <- matrix(Y, nrow = k)  # in case n==1
+  Y
+}

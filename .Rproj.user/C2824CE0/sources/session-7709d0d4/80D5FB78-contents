@@ -1,0 +1,83 @@
+\name{dca}
+\alias{dca}
+\title{
+Dirichlet component analysis
+}
+
+\description{
+Dirichlet component analysis.
+}
+
+\usage{
+dca(x, k, maxiter = 1000, pop_size = 50)
+}
+
+\arguments{
+\item{x}{
+An \eqn{n \times D} matrix with compositional data. Zero values are allowed.
+}
+\item{k}{
+The number of lower dimensions. It must be less than the dimensionality of the data, at most \eqn{D-1}.
+}
+\item{maxiter}{
+The maximum number of iterations allowed.
+}
+\item{pop_size}{
+The population size for the genetic algorithm, the number of balanced rearrangement matrices to generate.
+}
+\item{tol}{
+The tolerance value to terminate the algorithm.
+}
+}
+
+\details{
+The Dirichlet component analysis of Wang et al. (2008) is performed.
+}
+
+\value{
+A list inclusing:
+\item{W}{
+An \eqn{n \times k} matrix with the mapped compositional data onto the \eqn{k}-dimensional simplex.
+}
+\item{R}{
+A \eqn{D \times k} matrix which is used to right multiply the compositional data and map them to the
+\eqn{k}-dimensional simplex.
+}
+\item{alpha}{
+The estimate of the common parameter \eqn{\alpha} of the Dirichlet distribution.
+}
+\item{iters}{
+The number of iterations performed.
+}
+\item{runtime}{
+The runtime required by the algorithm.
+}
+}
+
+\references{
+Wang H. Y., Yang Q., Qin H. and Zha H. (2008, July). Dirichlet component analysis: feature extraction for compositional data. In Proceedings of the 25th International Conference on Machine Learning (pp. 1128-1135).
+}
+
+\author{
+Michail Tsagris.
+
+R implementation and documentation: Michail Tsagris \email{mtsagris@uoc.gr}.
+}
+
+%\note{
+%%  ~~further notes~~
+%}
+
+\seealso{
+\code{\link{saa.eg}, \link{saakl.eg}, \link{ternary}
+}
+}
+
+\examples{
+x <- as.matrix(iris[, 1:4])
+x <- x / rowSums(x)
+mod <- dca(x, 3)
+group <- as.numeric(iris[, 5])
+ternary(mod$W, colour = group)
+}
+
