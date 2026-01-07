@@ -88,7 +88,7 @@ nmf.manh <- function(x, k, W = NULL, H = NULL, k_meds = TRUE,
       }
     }
     # Compute objective (L1 norm)
-	  Z <- W %*% H
+    Z <- W %*% H
     res <- x - Z
     obj_history[iter] <- sum( abs(res) )
     # Check convergence
