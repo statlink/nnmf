@@ -80,6 +80,7 @@ nmf.sqp <- function(x, k, W = NULL, H = NULL, maxiter = 1000,
   error <- error[1:it]
   obj <- error[it]
   if ( !history )  error <- NULL
+  colnames(H) <- colnames(x)
   runtime <- proc.time() - runtime
   
   list( W = W, H = H, obj = obj, error = error, iters = it, runtime = runtime )

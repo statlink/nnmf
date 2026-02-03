@@ -127,6 +127,7 @@ nmf.qp <- function(x, k, W = NULL, H = NULL, k_means = TRUE, bs = 1, veo = FALSE
   error <- error[1:it]
   obj <- error[it]
   if ( !history )  error <- NULL
-
+  colnames(H) <- colnames(x)
+  
   list(W = W, H = H, Z = Z, obj = obj, error = error, iters = it, runtime = runtime)
 }

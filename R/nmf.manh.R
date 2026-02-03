@@ -101,6 +101,7 @@ nmf.manh <- function(x, k, W = NULL, H = NULL, k_meds = TRUE,
     }
   }
 
+  colnames(H) <- colnames(x)
   runtime <- proc.time() - runtime
 
   list( W = W, H = H, Z = Z, obj = obj_history[iter], iters = iter, runtime = runtime )
