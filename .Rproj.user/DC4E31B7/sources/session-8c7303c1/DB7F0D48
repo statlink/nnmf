@@ -3,7 +3,7 @@
     "path": "~/GitHub/nnmf/R/nmfqp.reg.R",
     "project_path": "R/nmfqp.reg.R",
     "type": "r_source",
-    "hash": "4173209894",
+    "hash": "0",
     "contents": "",
     "dirty": false,
     "created": 1770114197047.0,
@@ -12,8 +12,8 @@
     "properties": {
         "source_window_id": "",
         "Source": "Source",
-        "cursorPosition": "7,0",
-        "scrollLine": "0"
+        "cursorPosition": "19,52",
+        "scrollLine": "5"
     },
     "folds": "",
     "lastKnownWriteTime": 1770114213,
