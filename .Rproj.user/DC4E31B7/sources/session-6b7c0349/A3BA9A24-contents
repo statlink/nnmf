@@ -1,0 +1,74 @@
+\name{nmfqp.pred}
+\alias{nmfqp.pred}
+\title{
+Prediction of new values using NMF
+}
+
+\description{
+Prediction of new values using NMF.
+}
+
+\usage{
+nmfqp.pred(xnew, H, ridge = 1e-8, ncores = 1)
+}
+
+\arguments{
+\item{xnew}{
+An \eqn{n \times D} numerical matrix with new data.
+}
+\item{H}{
+The H matrix produced by the NMF on the observed data.
+}
+\item{ridge}{
+A small quantity added in the diagonal of the \eqn{D} matrix.
+}
+\item{ncores}{
+Do you want the update of W to be performed in parallel? If yes, specify the number of cores to use.
+}
+}
+
+\details{
+Based on an already NMF that was produced by minimizing the square of the Frobenius norm, the function
+estimates the \eqn{W} and \eqn{Z} matrices for some new data.
+}
+
+\value{
+\item{Wnew}{
+The \eqn{W} matrix for the new data, an \eqn{n \times k} matrix with the mapped data.
+}
+\item{Znew}{
+The reconstructed new data, \eqn{Znew = WnewHnew}.
+}
+\item{runtime}{
+The runtime required by the algorithm.
+}
+}
+
+\references{
+Wang Y. X. and Zhang Y. J. (2012). Nonnegative matrix factorization: A comprehensive review. IEEE Transactions on Knowledge and Data Engineering, 25(6): 1336-1353.
+
+Kim H. and Park H. (2008). Nonnegative matrix factorization based on alternating nonnegativity constrained least squares and active set method. SIAM Journal on Matrix Analysis and Applications, 30(2): 713-730.
+}
+
+\author{
+Michail Tsagris.
+
+R implementation and documentation: Michail Tsagris \email{mtsagris@uoc.gr}.
+}
+
+%\note{
+%%  ~~further notes~~
+%}
+
+\seealso{
+\code{ \link{nmf.sqp}
+}
+}
+
+\examples{
+x <- as.matrix(iris[1:140, 1:4])
+xnew <- as.matrix(iris[141:150, 1:4])
+mod <- nmf.qp(x, 2)
+pred <- nmfqp.pred(xnew, mod$H)
+}
+
