@@ -4,16 +4,20 @@
   abs(sol$solution)
 }
 
-nmf.qp <- function(x, k, H = NULL, k_means = TRUE, bs = 1, veo = FALSE, lr_h = 0.1,
+nmf.qp <- function(x, k, W = NULL, H = NULL, k_means = TRUE, bs = 1, veo = FALSE, lr_h = 0.1,
                     maxiter = 1000, tol = 1e-6, ridge = 1e-8, history = FALSE, ncores = 1) {
 
   runtime <- proc.time()
   n <- dim(x)[1]  ;  D <- dim(x)[2]
-  W <- matrix(nrow = n, ncol = k)
+
   # Initialize W, H with non-negativity only (no simplex)
   if ( k_means ) {
-    H <- nnmf::init(x, k, bs, veo)
+   a <- nnmf::init(x, k, bs, veo)
+   W <- a$W   ;  H <- a$H
   } else {
+    if ( is.null(W) ) {
+      W <- matrix( Rfast2::Runif(n * k, 0, Rfast::Median(x)), nrow = n, ncol = k )
+    }
     if ( is.null(H) ) {
       H <- matrix( Rfast2::Runif(k * D, 0, 10), nrow = k, ncol = D )
     }
@@ -124,6 +128,6 @@ nmf.qp <- function(x, k, H = NULL, k_means = TRUE, bs = 1, veo = FALSE, lr_h = 0
   obj <- error[it]
   if ( !history )  error <- NULL
   colnames(H) <- colnames(x)
-
+  
   list(W = W, H = H, Z = Z, obj = obj, error = error, iters = it, runtime = runtime)
 }

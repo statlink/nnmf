@@ -5,8 +5,8 @@
   pmax(sol$x, 0)
 }
 
-nmf.sqp <- function(x, k, H = NULL, maxiter = 1000, tol = 1e-4, ridge = 1e-8,
-                    history = FALSE, ncores = 1) {
+nmf.sqp <- function(x, k, H = NULL, maxiter = 1000,
+                     tol = 1e-4, ridge = 1e-8, history = FALSE, ncores = 1) {
   runtime <- proc.time()
   n <- dim(x)[1]
   D <- dim(x)[2]

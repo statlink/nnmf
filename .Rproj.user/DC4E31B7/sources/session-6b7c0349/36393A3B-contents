@@ -4,7 +4,7 @@
   abs(sol$solution)
 }
 
-nmf.qp <- function(x, k, H = NULL, k_means = TRUE, bs = 1, veo = FALSE, lr_h = 0.1,
+nmf.qp <- function(x, k, W = NULL, H = NULL, k_means = TRUE, bs = 1, veo = FALSE, lr_h = 0.1,
                     maxiter = 1000, tol = 1e-6, ridge = 1e-8, history = FALSE, ncores = 1) {
 
   runtime <- proc.time()
