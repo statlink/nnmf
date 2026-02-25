@@ -1,27 +1,24 @@
-\name{nmf.qp}
-\alias{nmf.qp}
+\name{nmfqp.cv}
+\alias{nmfqp.cv}
 \title{
-NMF minimizing the Frobenius norm
+K-fold cross-validation for choosing the rank in NMF
 }
 
 \description{
-NMF minimizing the Frobenius norm using quadratic programming.
+K-fold cross-validation for choosing the rank in NMF.
 }
 
 \usage{
-nmf.qp(x, k, H = NULL, k_means = TRUE, bs = 1, veo = FALSE, lr_h = 0.1,
-maxiter = 1000, tol = 1e-6, ridge = 1e-8, history = FALSE, ncores = 1)
+nmfqp.cv(x, k = 3:10, k_means = TRUE, bs = 1, veo = FALSE, lr_h = 0.1, maxiter = 1000,
+tol = 1e-6, ridge = 1e-8, ncores = 1, folds = NULL, nfolds = 10, graph = FALSE)
 }
 
 \arguments{
 \item{x}{
-An \eqn{n \times D} numerical matrix with data.
+An \eqn{n \times D} matrix with compositional data. Zero values are allowed.
 }
 \item{k}{
 The number of lower dimensions. It must be less than the dimensionality of the data, at most \eqn{D-1}.
-}
-\item{H}{
-If you have an initial estimate for H supply it here, otherwise leave it NULL.
 }
 \item{k_means}{
 If this is TRUE, then the K-means algorithm is used to initiate the W and H matrices.
@@ -31,6 +28,7 @@ If you use the K-means algorithm for initialization, you may want to use the min
 }
 \item{veo}{
 If the number of variables excceeds the number of observations set this is equal to TRUE.
+In this case, the sparse k-means algorithm of Witten and Tibshirani (2010) is used to initialize the H matrix.
 }
 \item{lr_h}{
 If veo is TRUE, then the exponentiated gradient descent method is used to update the H matrix. In this case you need to supply the value of the learning rate, which is 0.1 by default.
@@ -50,31 +48,21 @@ If this is TRUE, the reconstruction error at each iteration is returned.
 \item{ncores}{
 Do you want the update of W to be performed in parallel? If yes, specify the number of cores to use.
 }
+\item{graph}{
+If this is TRUE, the plot of the predicted error will be plotted.
+}
 }
 
 \details{
-Nonnegative matrix factorization using quadratic programming is performed.
-The objective function to be minimized is the square of the Frobenius norm.
+K-fold cross-validation to select the optimal rank k.
 }
 
 \value{
-\item{W}{
-The \eqn{W} matrix, an \eqn{n \times k} matrix with the mapped data.
+\item{sse}{
+The matrix with the sum of squares of residuals.
 }
-\item{H}{
-The \eqn{H} matrix, an \eqn{k \times D} matrix.
-}
-\item{Z}{
-The reconstructed data, \eqn{Z = WH}.
-}
-\item{obj}{
-The reconstruction error, \eqn{ ||x - Z||_F^2}.
-}
-\item{error}{
-If the argument history was set to TRUE the reconstruction error at each iteration will be performed, otherwise this is NULL.
-}
-\item{iters}{
-The number of iterations performed.
+\item{mspe}{
+A vector with the mean squares of residuals.
 }
 \item{runtime}{
 The runtime required by the algorithm.
@@ -98,14 +86,12 @@ R implementation and documentation: Michail Tsagris \email{mtsagris@uoc.gr}.
 %}
 
 \seealso{
-\code{ \link{nmf.sqp}
+\code{ \link{nmf.qp}, \link{nmfqp.pred}
 }
 }
 
 \examples{
 x <- as.matrix(iris[, 1:4])
-mod <- nmf.qp(x, 2)
-group <- as.numeric(iris[, 5])
-plot(mod$W, col = group)
+est <- snmfqp.pred(x[1:10, ], 3, mod$H)
 }
 

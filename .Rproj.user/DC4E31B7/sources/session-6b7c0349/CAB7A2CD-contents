@@ -28,8 +28,7 @@ Do you want the update of W to be performed in parallel? If yes, specify the num
 }
 
 \details{
-Based on an already NMF that was produced by minimizing the square of the Frobenius norm, the function
-estimates the \eqn{W} and \eqn{Z} matrices for some new data.
+Prediction of new values for the nonnegative matrix factorization.
 }
 
 \value{
