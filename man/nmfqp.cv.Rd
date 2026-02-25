@@ -96,6 +96,6 @@ R implementation and documentation: Michail Tsagris \email{mtsagris@uoc.gr}.
 
 \examples{
 x <- as.matrix(iris[, 1:4])
-est <- nmfqp.pred(x[1:10, ], 3, mod$H)
+mod <- nmfqp.cv(x, 2:3)
 }
 
