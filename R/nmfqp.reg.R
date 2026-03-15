@@ -44,7 +44,7 @@ nmfqp.reg <- function(x, z, k, maxiter = 1000, tol = 1e-6, ncores = 1) {
       for ( i in 1:n ) {
         dvec <- H %*% R[i, ]
         W[i, ] <- tryCatch( pmax( quadprog::solve.QP( Dmat, dvec, dk, b0k )$solution, 0 ),
-                  error = function(e) { return( k1 ) } )
+                  error = function(e) { return( w1 ) } )
       }
     }
 
