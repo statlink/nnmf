@@ -30,21 +30,21 @@ nmfqp.reg <- function(x, z, k, maxiter = 1000, tol = 1e-6, ncores = 1) {
     for ( j in 1:p ) {
       dvec <- crossprod(z, R[, j])
       B[, j] <- tryCatch( pmax( quadprog::solve.QP( Dmatz, dvec, dq, b0q )$solution, 0 ),
-                error = function(e) { return( b1 ) } )
+                          error = function(e) { return( b1 ) } )
     }
     # Update W
     R <- x - z %*% B
     Dmat <- tcrossprod(H)
     if  ( ncores > 1 ) {
       W <- t( parallel::parSapply( cl, 1:n, function(i) {
-           dvec <- H %*% R[i, ]
-           abs( quadprog::solve.QP( Dmat, dvec, dk, b0k )$solution )
+        dvec <- H %*% R[i, ]
+        abs( quadprog::solve.QP( Dmat, dvec, dk, b0k )$solution )
       } ) )
     } else {
       for ( i in 1:n ) {
         dvec <- H %*% R[i, ]
         W[i, ] <- tryCatch( pmax( quadprog::solve.QP( Dmat, dvec, dk, b0k )$solution, 0 ),
-                  error = function(e) { return( w1 ) } )
+                            error = function(e) { return( w1 ) } )
       }
     }
 
@@ -54,7 +54,7 @@ nmfqp.reg <- function(x, z, k, maxiter = 1000, tol = 1e-6, ncores = 1) {
       dvec <- crossprod(W, R[, j])
       tryCatch(
         H[i, ] <- pmax( quadprog::solve.QP( Dmat, dvec, dk, b0k )$solution, 0 ),
-                  error = function(e) { return( h1 ) } ) 
+        error = function(e) { return( h1 ) } )
     }
 
     # Compute SSE

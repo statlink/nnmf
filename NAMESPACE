@@ -1,4 +1,5 @@
-#useDynLib(Compositional, .registration = TRUE)
+useDynLib(nnmf, .registration = TRUE)
+importFrom(Rcpp, evalCpp)
 
 importFrom("Rfast", rowsums, rowMaxs, Log, Median)
 importFrom("Rfast2", Runif)
@@ -12,6 +13,13 @@ importFrom("Compositional", makefolds)
 importFrom("graphics", axis)
 import("parallel")
 
-exportPattern("^[[:alpha:]]+")
-exportPattern("^[^\\.]")
-
+export("init")
+export("nmf.hals")
+export("nmf.manh")
+export("nmf.qp")
+export("nmf.sqp")
+export("nmfqp.cv")
+export("nmfqp.pred")
+export("nmfqp.reg")
+#exportPattern("^[[:alpha:]]+")
+#exportPattern("^[^\\.]")
