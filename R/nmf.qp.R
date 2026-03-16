@@ -158,7 +158,6 @@ nmf.qp <- function(x, k, H = NULL, k_means = TRUE, bs = 1, veo = FALSE,
   if (!veo) {
 
     W <- matrix(0, nrow = n, ncol = k)
-
     # Call C++ ALS
     out <- nmf_als(
       X        = x,
@@ -186,28 +185,24 @@ nmf.qp <- function(x, k, H = NULL, k_means = TRUE, bs = 1, veo = FALSE,
   } else {  ## veo is TRUE, n < p
 
     W <- matrix(nrow = n, ncol = k)
-
     error  <- numeric(maxiter)
     A_W    <- diag(k)
     b_W    <- rep(0, k)
     ridgek <- diag(ridge, k)
 
     suppressWarnings({
-
       # CREATE CLUSTER ONCE BEFORE LOOP
       if (ncores > 1) {
         cl <- parallel::makeCluster(ncores)
         on.exit(parallel::stopCluster(cl), add = TRUE)
         parallel::clusterEvalQ(cl, library(quadprog))
         parallel::clusterExport(
-          cl,
-          varlist = c(".solve_w_row_qp", "A_W", "b_W"),
-          envir   = environment()
+          cl, varlist = c(".solve_w_row_qp", "A_W", "b_W"),
+          envir = environment()
         )
       }
 
         sx2 <- sum(x^2)
-
         for (it in 1:maxiter) {
           # ----------------- W update -----------------
           G_W <- 2 * tcrossprod(H) + ridgek
