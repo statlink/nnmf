@@ -143,22 +143,21 @@ nmf.qp <- function(x, k, H = NULL, k_means = TRUE, bs = 1, veo = FALSE,
   runtime <- proc.time()
   n <- dim(x)[1]; D <- dim(x)[2]
 
+  # Initialize H exactly like the original
+  if (k_means) {
+    H <- nnmf::init(x, k, bs, veo)
+  } else {
+    if (is.null(H)) {
+      H <- matrix(Rfast2::Runif(k * D, 0, 10), nrow = k, ncol = D)
+    }
+  }
+
   ## ============================================================
   ## === C++ ALS for all !veo cases =============================
   ## ============================================================
   if (!veo) {
 
-    # W is just a working matrix, like in the original
     W <- matrix(0, nrow = n, ncol = k)
-
-    # Initialize H exactly like the original
-    if (k_means) {
-      H <- nnmf::init(x, k, bs, veo)
-    } else {
-      if (is.null(H)) {
-        H <- matrix(Rfast2::Runif(k * D, 0, 10), nrow = k, ncol = D)
-      }
-    }
 
     # Call C++ ALS
     out <- nmf_als(
@@ -183,139 +182,72 @@ nmf.qp <- function(x, k, H = NULL, k_means = TRUE, bs = 1, veo = FALSE,
       iters   = out$iters,
       runtime = runtime
     ))
-  }
 
-  ## ============================================================
-  ## === ORIGINAL R VEO BRANCH (unchanged) ======================
-  ## ============================================================
-  n <- dim(x)[1]; D <- dim(x)[2]
-  W <- matrix(nrow = n, ncol = k)
+  } else {  ## veo is TRUE, n < p
 
-  # Initialize W, H with non-negativity only (no simplex)
-  if (k_means) {
-    H <- nnmf::init(x, k, bs, veo)
-  } else {
-    if (is.null(H)) {
-      H <- matrix(Rfast2::Runif(k * D, 0, 10), nrow = k, ncol = D)
-    }
-  }
+    W <- matrix(nrow = n, ncol = k)
 
-  error  <- numeric(maxiter)
-  A_W    <- diag(k)
-  b_W    <- rep(0, k)
-  ridgek <- diag(ridge, k)
+    error  <- numeric(maxiter)
+    A_W    <- diag(k)
+    b_W    <- rep(0, k)
+    ridgek <- diag(ridge, k)
 
-  suppressWarnings({
+    suppressWarnings({
 
-    if (ncores > 1) {
-      cl <- parallel::makeCluster(ncores)
-      on.exit(parallel::stopCluster(cl), add = TRUE)
-      parallel::clusterEvalQ(cl, library(quadprog))
-      parallel::clusterExport(
-        cl,
-        varlist = c(".solve_w_row_qp", "A_W", "b_W"),
-        envir   = environment()
-      )
-    }
-
-    if (!veo) {  ## (kept for structural symmetry, but !veo never reaches here now)
-
-      sx2 <- sum(x^2)
-      kD  <- k * D
-      A   <- diag(kD)
-      bvec <- rep(0, kD)
-
-      for (it in 1:maxiter) {
-        G_W <- 2 * tcrossprod(H) + ridgek
-        g_W <- 2 * tcrossprod(H, x)
-
-        if (ncores > 1) {
-          parallel::clusterExport(cl, varlist = c("G_W", "g_W"),
-                                  envir = environment())
-          suppressWarnings({
-            W <- t(parallel::parSapply(
-              cl, 1:n, .solve_w_row_qp,
-              G_W = G_W, g_W = g_W, A_W = A_W, b_W = b_W
-            ))
-          })
-        } else {
-          for (i in 1:n) {
-            sol <- quadprog::solve.QP(
-              Dmat = G_W, dvec = g_W[, i],
-              Amat = A_W, bvec = b_W, meq = 0
-            )
-            W[i, ] <- abs(sol$solution)
-          }
-        }
-
-        dvec <- as.vector(crossprod(W, x))
-        XX   <- kronecker(diag(D), crossprod(W))
-        f <- try(
-          quadprog::solve.QP(Dmat = XX, dvec = dvec,
-                             Amat = A, bvec = bvec, meq = 0),
-          silent = TRUE
+      if (ncores > 1) {
+        cl <- parallel::makeCluster(ncores)
+        on.exit(parallel::stopCluster(cl), add = TRUE)
+        parallel::clusterEvalQ(cl, library(quadprog))
+        parallel::clusterExport(
+          cl,
+          varlist = c(".solve_w_row_qp", "A_W", "b_W"),
+          envir   = environment()
         )
-        if (identical(class(f), "try-error")) {
-          f <- quadprog::solve.QP(
-            Dmat = Matrix::nearPD(XX)$mat, dvec = dvec,
-            Amat = A, bvec = bvec, meq = 0
-          )
-        }
-        H <- matrix(abs(f$solution), nrow = k, ncol = D)
-        err <- sx2 + 2 * f$value
-        error[it] <- err
-
-        if (it > 1 && abs(error[it - 1] - err) < tol) break
       }
-      Z <- W %*% H
 
-    } else {  ## veo is TRUE, n < p
+        sx2 <- sum(x^2)
 
-      sx2 <- sum(x^2)
+        for (it in 1:maxiter) {
+          # ----------------- W update -----------------
+          G_W <- 2 * tcrossprod(H) + ridgek
+          g_W <- 2 * tcrossprod(H, x)
 
-      for (it in 1:maxiter) {
-        G_W <- 2 * tcrossprod(H) + ridgek
-        g_W <- 2 * tcrossprod(H, x)
+          if (ncores > 1) {
+            # Export iteration-specific variables
+            parallel::clusterExport(cl, varlist = c("G_W", "g_W"), envir = environment())
+            suppressWarnings({
+              W <- t( parallel::parSapply(cl, 1:n, .solve_w_row_qp, G_W = G_W, g_W = g_W, A_W = A_W, b_W = b_W) )
+            })
+          } else {
+            for (i in 1:n) {
+              sol <- quadprog::solve.QP(Dmat = G_W, dvec = g_W[, i], Amat = A_W, bvec = b_W, meq = 0)
+              W[i, ] <- abs(sol$solution)
+            }
+          }
 
-        if (ncores > 1) {
-          parallel::clusterExport(cl, varlist = c("G_W", "g_W"),
-                                  envir = environment())
-          suppressWarnings({
-            W <- t(parallel::parSapply(
-              cl, 1:n, .solve_w_row_qp,
-              G_W = G_W, g_W = g_W, A_W = A_W, b_W = b_W
-            ))
-          })
-        } else {
-          for (i in 1:n) {
-            sol <- quadprog::solve.QP(
-              Dmat = G_W, dvec = g_W[, i],
-              Amat = A_W, bvec = b_W, meq = 0
-            )
-            W[i, ] <- abs(sol$solution)
+          # ----------------- H update -----------------
+          # Exponentiated gradient WITHOUT simplex normalization
+          E <- W %*% H - x
+          grad_h <- crossprod(W, E)
+          H <- H * exp(-lr_h * grad_h)
+          # NO normalization - keep only non-negativity
+          Z <- W %*% H
+          err <- sum( (x - Z)^2 )
+          error[it] <- err
+
+          if (it > 1 && abs(error[it - 1] - err) < tol) {
+            break
           }
         }
+      })  # end suppressWarnings
 
-        E      <- W %*% H - x
-        grad_h <- crossprod(W, E)
-        H      <- H * exp(-lr_h * grad_h)
-        Z      <- W %*% H
+    }  ##  end if (!veo)
 
-        err       <- sum((x - Z)^2)
-        error[it] <- err
+    runtime <- proc.time() - runtime
+    error <- error[1:it]
+    obj <- error[it]
+    if ( !history )  error <- NULL
+    colnames(H) <- colnames(x)
 
-        if (it > 1 && abs(error[it - 1] - err) < tol) break
-      }
-    }
-  })
-
-  runtime <- proc.time() - runtime
-  error   <- error[1:it]
-  obj     <- error[it]
-  if (!history) error <- NULL
-  colnames(H) <- colnames(x)
-
-  list(W = W, H = H, Z = Z, obj = obj,
-       error = error, iters = it, runtime = runtime)
+    list(W = W, H = H, Z = Z, obj = obj, error = error, iters = it, runtime = runtime)
 }
-
