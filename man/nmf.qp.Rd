@@ -88,9 +88,10 @@ Kim H. and Park H. (2008). Nonnegative matrix factorization based on alternating
 }
 
 \author{
-Michail Tsagris.
+Michail Tsagris, Nikolaos Kontemeniotis and Christos Adam.
 
-R implementation and documentation: Michail Tsagris \email{mtsagris@uoc.gr}.
+R implementation and documentation: Michail Tsagris \email{mtsagris@uoc.gr}, Nikolaos Kontemeniotis \email{kontemeniotisn@gmail.com}
+and Christos Adam \email{pada4m4@gmail.com}.
 }
 
 %\note{
