@@ -1,8 +1,8 @@
 Package: nnmf
 Type: Package
 Title: Nonnegative Matrix Factorization  
-Version: 1.2
-Date: 2026-03-16
+Version: 1.3
+Date: 2026-03-17
 Authors@R: c( person("Michail", "Tsagris", role = c("aut", "cre"), email = "mtsagris@uoc.gr"), 
               person("Nikolaos", "Kontemeniotis", role = "aut", email = "kontemeniotisn@gmail.com" ),
               person("Christos", "Adam", role = "aut", email = "pada4m4@gmail.com", comment = c(ORCID = "0009-0003-3244-7034") ))
