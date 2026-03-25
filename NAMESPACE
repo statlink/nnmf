@@ -2,7 +2,7 @@ useDynLib(nnmf, .registration = TRUE)
 importFrom(Rcpp, evalCpp)
 
 importFrom("Rfast", rowsums, rowMaxs, Log, Median)
-importFrom("Rfast2", Runif)
+importFrom("rangen", Runif)
 importFrom("stats", median, sd, kmeans)
 importFrom("Matrix", nearPD, colSums, sparseMatrix, Diagonal, bdiag)
 importFrom("sparcl", KMeansSparseCluster)

@@ -33,8 +33,8 @@ nmf.manh <- function(x, k, W = NULL, H = NULL, k_meds = TRUE,
     for ( i in 1:k )  W[, i] <- Rfast::rowsums(x[, a$clusters == i, drop = FALSE])
     H <- ClusterR::Cluster_Medoids(x, k, distance_metric = "manhattan", threads = ncores)$medoids
   } else {
-    W <- matrix( Rfast2::Runif(n * k, 0, Rfast::Median(x)), n, k )
-    H <- matrix( Rfast2::Runif(k * D, 0, 10), k, D )
+    W <- matrix( rangen::Runif(n * k, 0, Rfast::Median(x)), n, k )
+    H <- matrix( rangen::Runif(k * D, 0, 10), k, D )
   }
 
   obj_history <- numeric(maxiter)

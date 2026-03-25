@@ -5,8 +5,8 @@ nmfqp.reg <- function(x, z, k, maxiter = 1000, tol = 1e-6, ncores = 1) {
 
   # Initialize
   med <- Rfast::Median(x)
-  W <- matrix( Rfast2::Runif(n * k, 0, med), n, k )
-  H <- matrix( Rfast2::Runif(k * p, 0, med), k, p )
+  W <- matrix( rangen::Runif(n * k, 0, med), n, k )
+  H <- matrix( rangen::Runif(k * p, 0, med), k, p )
   B <- matrix(nrow = q, ncol = p)
 
   sse_old <- Inf

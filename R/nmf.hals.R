@@ -3,8 +3,8 @@ nmf.hals <- function(x, k, maxiter = 2000, tol = 1e-6, history = FALSE) {
   runtime <- proc.time()
   n <- dim(x)[1]  ;  D <- dim(x)[2]
 
-  W <- matrix( Rfast2::Runif(n * k), nrow = n, ncol = k )
-  H <- matrix( Rfast2::Runif(k * D), nrow = k, ncol = D )
+  W <- matrix( rangen::Runif(n * k), nrow = n, ncol = k )
+  H <- matrix( rangen::Runif(k * D), nrow = k, ncol = D )
   R <- x - W %*% H  # Maintain residual
   obj <- numeric(maxiter)
 

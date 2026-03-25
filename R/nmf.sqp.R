@@ -13,7 +13,7 @@ nmf.sqp <- function(x, k, H = NULL, maxiter = 1000, tol = 1e-4, ridge = 1e-8,
 
   # Initialize W, H (no normalization)
   W <- matrix(NA, nrow = n, ncol = k)
-  H <- matrix( Rfast2::Runif(k * D), nrow = k, ncol = D)
+  H <- matrix( rangen::Runif(k * D), nrow = k, ncol = D)
 
   error <- numeric(maxiter)
   ridgek <- diag(ridge, k)
