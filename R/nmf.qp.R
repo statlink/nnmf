@@ -142,14 +142,14 @@ nmf.qp <- function(x, k, H = NULL, k_means = TRUE, bs = 1, lr_h = 0.1, maxiter =
 
   runtime <- proc.time()
   n <- dim(x)[1]  ;  D <- dim(x)[2]
-  veo <- (D > n)
+  veo <- (D >= n)
 
   # Initialize H with non-negativity only (no simplex)
-  if (k_means) {
-    H <- nnmf::init(x, k, bs, veo)
+  if ( k_means ) {
+    H <- nnmf::init(x, k, bs)
   } else {
-    if (is.null(H)) {
-      H <- matrix(Rfast2::Runif(k * D, 0, 10), nrow = k, ncol = D)
+    if ( is.null(H) ) {
+      H <- matrix( rangen::Runif(k * D, 0, 10), nrow = k, ncol = D)
     }
   }
   W <- matrix(0, nrow = n, ncol = k)
