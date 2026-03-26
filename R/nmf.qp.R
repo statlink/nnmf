@@ -129,6 +129,7 @@
 #   list(W = W, H = H, Z = Z, obj = obj, error = error, iters = it, runtime = runtime)
 # }
 
+
 # Helper as in the original
 .solve_w_row_qp <- function(i, G_W, g_W, A_W, b_W) {
   sol <- quadprog::solve.QP(Dmat = G_W, dvec = g_W[, i],
@@ -136,12 +137,12 @@
   abs(sol$solution)
 }
 
-nmf.qp <- function(x, k, H = NULL, k_means = TRUE, bs = 1, veo = FALSE,
-                   lr_h = 0.1, maxiter = 1000, tol = 1e-6,
-                   ridge = 1e-8, history = FALSE, ncores = 1) {
+nmf.qp <- function(x, k, H = NULL, k_means = TRUE, bs = 1, lr_h = 0.1, maxiter = 1000,
+                   tol = 1e-6, ridge = 1e-8, history = FALSE, ncores = 1) {
 
   runtime <- proc.time()
-  n <- dim(x)[1]; D <- dim(x)[2]
+  n <- dim(x)[1]  ;  D <- dim(x)[2]
+  veo <- (D > n)
 
   # Initialize H with non-negativity only (no simplex)
   if (k_means) {
@@ -151,40 +152,20 @@ nmf.qp <- function(x, k, H = NULL, k_means = TRUE, bs = 1, veo = FALSE,
       H <- matrix(Rfast2::Runif(k * D, 0, 10), nrow = k, ncol = D)
     }
   }
+  W <- matrix(0, nrow = n, ncol = k)
 
   ## ============================================================
   ## === C++ ALS for all !veo cases =============================
   ## ============================================================
-  if (!veo) {
-
-    W <- matrix(0, nrow = n, ncol = k)
+  if ( !veo ) {
     # Call C++ ALS
-    out <- nmf_als(
-      X        = x,
-      low_dim  = k,
-      W_init   = W,
-      H_init   = H,
-      tol      = tol,
-      max_iter = maxiter,
-      parallel = (ncores > 1),
-      ncores   = ncores
-    )
-
-    runtime <- proc.time() - runtime
-
-    return(list(
-      W       = out$W,
-      H       = out$H,
-      Z       = out$Z,
-      obj     = out$obj,
-      error   = NULL,
-      iters   = out$iters,
-      runtime = runtime
-    ))
+    out <- nmf_als( X = x, low_dim = k, W_init = W,
+           H_init = H, tol = tol, max_iter = maxiter,
+           parallel = (ncores > 1), ncores = ncores )
+    W <- out$W  ;  H <- out$H  ;  Z <- out$Z
+    obj <- out$obj  ;  error <- NULL  ;  it <- out$iters
 
   } else {  ## veo is TRUE, n < p
-
-    W <- matrix(nrow = n, ncol = k)
     error  <- numeric(maxiter)
     A_W    <- diag(k)
     b_W    <- rep(0, k)
@@ -208,7 +189,7 @@ nmf.qp <- function(x, k, H = NULL, k_means = TRUE, bs = 1, veo = FALSE,
           G_W <- 2 * tcrossprod(H) + ridgek
           g_W <- 2 * tcrossprod(H, x)
 
-          if (ncores > 1) {
+          if ( ncores > 1 ) {
             # Export iteration-specific variables
             parallel::clusterExport(cl, varlist = c("G_W", "g_W"), envir = environment())
             suppressWarnings({
@@ -220,7 +201,6 @@ nmf.qp <- function(x, k, H = NULL, k_means = TRUE, bs = 1, veo = FALSE,
               W[i, ] <- abs(sol$solution)
             }
           }
-
           # ----------------- H update -----------------
           # Exponentiated gradient WITHOUT simplex normalization
           E <- W %*% H - x
@@ -237,13 +217,14 @@ nmf.qp <- function(x, k, H = NULL, k_means = TRUE, bs = 1, veo = FALSE,
         }
       })  # end suppressWarnings
 
-    }  ##  end if (!veo)
-
-    runtime <- proc.time() - runtime
     error <- error[1:it]
     obj <- error[it]
     if ( !history )  error <- NULL
+    }  ##  end if (!veo)
+
+    runtime <- proc.time() - runtime
     colnames(H) <- colnames(x)
 
     list(W = W, H = H, Z = Z, obj = obj, error = error, iters = it, runtime = runtime)
 }
+
