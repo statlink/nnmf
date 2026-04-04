@@ -1,4 +1,5 @@
 #include <Rcpp.h>
+#include <nnsolve/fnnls_core.h>
 using namespace Rcpp;
 
 // // [[Rcpp::plugins(openmp)]]
