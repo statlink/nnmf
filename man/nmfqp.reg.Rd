@@ -9,18 +9,21 @@ NMF with covariates minimizing the Frobenius norm using quadratic programming.
 }
 
 \usage{
-nmfqp.reg(x, z, k, maxiter = 1000, tol = 1e-6, ncores = 1)
+nmfqp.reg(X, Z, k, H_init, maxiter = 1000, tol = 1e-6, ncores = 1)
 }
 
 \arguments{
-\item{x}{
+\item{X}{
 An \eqn{n \times D} numerical matrix with data.
 }
-\item{z}{
+\item{Z}{
 An \eqn{n \times q} matrix with the covariates.
 }
 \item{k}{
 The number of lower dimensions. It must be less than the dimensionality of the data, at most \eqn{D-1}.
+}
+\item{H_init}{
+If you have an initial estimate for H supply it here, otherwise leave it NULL.
 }
 \item{maxiter}{
 The maximum number of iterations allowed.
@@ -85,8 +88,8 @@ R implementation and documentation: Michail Tsagris \email{mtsagris@uoc.gr}.
 }
 
 \examples{
-x <- as.matrix(iris[, 1:3])
-z <- model.matrix(x ~., data = iris[, 4:5])[, -1]
-mod <- nmfqp.reg(x, z, 2)
+X <- as.matrix(iris[, 1:3])
+Z <- model.matrix(X ~., data = iris[, 4:5])[, -1]
+mod <- nmfqp.reg(X, Z, 2)
 }
 

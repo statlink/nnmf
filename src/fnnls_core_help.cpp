@@ -84,8 +84,7 @@ void extract_passive_coeffs(const Vec &coeffs, Vec &passive_coeffs,
   const double *coeffs_ptr = coeffs.data();
 
   for (int i = 0; i < npass; ++i) {
-    const int idx = passive_ptr[i];
-    pass_coeffs_ptr[i] = coeffs_ptr[idx];
+    pass_coeffs_ptr[i] = coeffs_ptr[passive_ptr[i]];
   }
 }
 

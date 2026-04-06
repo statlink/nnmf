@@ -1,18 +1,16 @@
 #include <RcppEigen.h>
-#include <nnsolve/fnnls.h>
+#include <nnsolve/fnnls_core.h>
 #ifdef _OPENMP
 #include <omp.h>
 #endif
 
 //[[Rcpp::export]]
-Rcpp::List nmf_pred(const Eigen::MatrixXd &X, const Eigen::MatrixXd &H,
-                    const bool parallel = false, const int ncores = -1) {
-
+Rcpp::List nmf_pred_cpp(const Eigen::MatrixXd &X, const Eigen::MatrixXd &H,
+                        const double ridge, const int ncores) {
 #ifdef _OPENMP
-  if (parallel && ncores > 0)
+  if (ncores > 1)
     omp_set_num_threads(ncores);
 #endif
-
   const int low_dim = H.rows();
   const int n = X.rows();
   const double lambda = 1e-7;
@@ -31,18 +29,19 @@ Rcpp::List nmf_pred(const Eigen::MatrixXd &X, const Eigen::MatrixXd &H,
   HHt.setZero();
   HHt.selfadjointView<Eigen::Upper>().rankUpdate(H);
   HHt = HHt.selfadjointView<Eigen::Upper>();
-  HHt.diagonal().array() += lambda;
+  HHt.diagonal().array() += ridge;
 
-  Eigen::Matrix::<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> W(n, low_dim);
+  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> W(
+      n, low_dim);
 
 #ifdef _OPENMP
-#pragma omp parallel if (parallel)
+#pragma omp parallel
   {
     Eigen::VectorXd rhs(low_dim);
 #pragma omp for schedule(dynamic, chunk)
     for (int i = 0; i < n; ++i) {
       rhs.noalias() = H * X.row(i).transpose();
-      W.row(i) = fnnls(HHt, rhs).transpose();
+      W.row(i) = fnnls_core(HHt, rhs).transpose();
     }
   }
 #else
@@ -50,11 +49,10 @@ Rcpp::List nmf_pred(const Eigen::MatrixXd &X, const Eigen::MatrixXd &H,
     Eigen::VectorXd rhs(low_dim);
     for (int i = 0; i < n; ++i) {
       rhs.noalias() = H * X.row(i).transpose();
-      W.row(i) = fnnls(HHt, rhs).transpose();
+      W.row(i) = fnnls_core(HHt, rhs).transpose();
     }
   }
 #endif
-
   return Rcpp::List::create(Rcpp::Named("Wnew") = W,
                             Rcpp::Named("Znew") = W * H);
 }
