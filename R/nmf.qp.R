@@ -2,13 +2,13 @@ nmf.qp <- function(X, k, H_init = NULL, k_means = TRUE, bs = 1, lr_h = 0.1, tol 
   runtime <- proc.time()
 
   if (k_means && is.null(H_init)) {
-    H <- nnmf::init(X, k, bs)
+    H_init <- nnmf::init(X, k, bs)
   }
 
   res <- nmf_als_cpp(X, k, H_init, lr_h, tol, maxiter, ridge, ncores)
 
   runtime <- proc.time() - runtime
-  colnames(H) <- colnames(X)
+  colnames(res$H) <- colnames(X)
 
   list(W = res$W, H = res$H, Z = res$Z, obj = res$obj, iters = res$iter, runtime = runtime)
 }
