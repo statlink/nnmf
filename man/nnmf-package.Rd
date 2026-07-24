@@ -30,7 +30,7 @@ Michail Tsagris <mtsagris@uoc.gr>.
 
 \references{
 Sevinc V., Kontemeniotis N., Perdikis T. and Tsagris M. (2026).
-Non--negative matrix factorization using the \textit{R} package \textsf{nnmf}.
+Non--negative matrix factorization using the R package nnmf.
 https://arxiv.org/pdf/2607.20084
 
 Erichson N. B., Mendible A., Wihlborn S. and Kutz J. N. (2018). Randomized nonnegative matrix factorization.
