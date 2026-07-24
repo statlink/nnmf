@@ -9,8 +9,8 @@ NMF minimizing the Frobenius norm using quadratic programming.
 }
 
 \usage{
-nmf.qp(X, k, H_init = NULL, k_means = TRUE, bs = 1, lr_h = 0.1,tol = 1e-6,
-       maxiter = 1000, ridge = 1e-8, ncores = 1)
+nmf.qp(X, k, H_init = NULL, k_means = TRUE, bs = 1, lr_h = 0.1, tol = 1e-6,
+maxiter = 1000, ridge = 1e-8, ncores = 1)
 }
 
 \arguments{
@@ -75,6 +75,10 @@ The runtime required by the algorithm.
 }
 
 \references{
+Sevinc V., Kontemeniotis N., Perdikis T. and Tsagris M. (2026).
+Non--negative matrix factorization using the R package nnmf.
+https://arxiv.org/pdf/2607.20084
+
 Wang Y. X. and Zhang Y. J. (2012). Nonnegative matrix factorization: A comprehensive review. IEEE Transactions on Knowledge and Data Engineering, 25(6): 1336-1353.
 
 Kim H. and Park H. (2008). Nonnegative matrix factorization based on alternating nonnegativity constrained least squares and active set method. SIAM Journal on Matrix Analysis and Applications, 30(2): 713-730.

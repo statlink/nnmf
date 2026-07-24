@@ -69,6 +69,10 @@ The runtime required by the algorithm.
 }
 
 \references{
+Sevinc V., Kontemeniotis N., Perdikis T. and Tsagris M. (2026).
+Non--negative matrix factorization using the R package nnmf.
+https://arxiv.org/pdf/2607.20084
+
 Wang Y. X. and Zhang Y. J. (2012). Nonnegative matrix factorization: A comprehensive review. IEEE Transactions on Knowledge and Data Engineering, 25(6): 1336-1353.
 
 Kim H. and Park H. (2008). Nonnegative matrix factorization based on alternating nonnegativity constrained least squares and active set method. SIAM Journal on Matrix Analysis and Applications, 30(2): 713-730.

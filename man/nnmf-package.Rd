@@ -13,8 +13,8 @@ Nonnegative matrix factorization (NMF) is implemented.
 \tabular{ll}{
 Package: \tab nnmf\cr
 Type: \tab Package\cr
-Version: \tab 1.4 \cr
-Date: \tab 2026-04-12\cr
+Version: \tab 1.5 \cr
+Date: \tab 2026-07-24\cr
 License: \tab GPL-2\cr
 }
 }
@@ -29,6 +29,10 @@ Michail Tsagris <mtsagris@uoc.gr>.
 }
 
 \references{
+Sevinc V., Kontemeniotis N., Perdikis T. and Tsagris M. (2026).
+Non--negative matrix factorization using the \textit{R} package \textsf{nnmf}.
+https://arxiv.org/pdf/2607.20084
+
 Erichson N. B., Mendible A., Wihlborn S. and Kutz J. N. (2018). Randomized nonnegative matrix factorization.
 Pattern Recognition Letters, 104: 1-7.
 
