@@ -14,7 +14,7 @@ Nonnegative matrix factorization (NMF) is implemented.
 Package: \tab nnmf\cr
 Type: \tab Package\cr
 Version: \tab 1.5 \cr
-Date: \tab 2026-07-24\cr
+Date: \tab 2026-07-25\cr
 License: \tab GPL-2\cr
 }
 }
